@@ -1,0 +1,84 @@
+---
+title: "Reproducibility assignment"
+author: "Jens Ustvedt"
+format: html
+editor: visual
+---
+Part 1: Reproducing analysis and results from paper
+
+I wanted to reproduce the results presented in a table in the paper, which showed all models they made and p-values for each model (ignoring whether this result is statistically interesting), and an additional plot of the data to see if the data supplied was equal (in size and values) to what the authors used to make their results. 
+```{r}
+#| label: load packages
+#| message: false
+library(readxl)
+library(here)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(janitor)
+```
+
+The data was supplied in a word-document, so I moved it to an excel file before importing. The article specifies that all densities are log-transformed, so I did the same. To have cruise as a random effect, i added a column with month and year combined, to identify each cruise
+```{r}
+#| label: import data
+#| message: false
+density_data <- read_xlsx(here("data/Exceldata.xlsx")) |> 
+  mutate(log_small_zooplankton_dens = log(`smallsize zooplankton density (ind. m3)`), 
+         log_copepode_dens = log(`copepode density (ind. m3)`),
+         log_larvae_dens = log(`larval fish density (ind. m3)`),
+         Month_name = month.name[month],
+         month_year = paste(year, Month_name, sep = "-"))|> 
+  select(-`smallsize zooplankton density (ind. m3)`, -`copepode density (ind. m3)`, -`larval fish density (ind. m3)`) |> 
+  mutate(month_year = paste(year, Month_name, sep = "-")) |> 
+  clean_names()
+```
+
+
+I made models for each explanatory variable as described in the paper, with log transformed larvae density as response and cruise (month_year) as random effect
+```{r}
+#| label: Small zooplankton model
+mod1 <- lmer(log_larvae_dens ~ log_small_zooplankton_dens + (1|month_year), data = density_data)
+p_value_mod1 <- summary(mod1)$coefficients["log_small_zooplankton_dens", "Pr(>|t|)"]
+p_value_mod1
+```
+I extracted only p-values as this is the value I am comparing to the paper. Since this is just a check of reproducibility, I did not round of the p-values
+
+```{r}
+#| label: Copepode model
+mod2 <- lmer(log_larvae_dens ~ log_copepode_dens + (1|month_year), data = density_data)
+p_value_mod2 <- summary(mod2)$coefficients["log_copepode_dens", "Pr(>|t|)"]
+p_value_mod2
+```
+
+```{r}
+#| label: Temprature model
+mod3 <- lmer(log_larvae_dens ~ sea_surface_temprature_c + (1|month_year), data = density_data)
+p_value_mod3 <- summary(mod3)$coefficients["sea_surface_temprature_c", "Pr(>|t|)"]
+p_value_mod3
+```
+
+```{r}
+#| label: Salinity model
+mod4 <- lmer(log_larvae_dens ~ sea_surface_salinity_psu + (1|month_year), data = density_data)
+p_value_mod4 <- summary(mod4)$coefficients["sea_surface_salinity_psu", "Pr(>|t|)"]
+p_value_mod4
+```
+
+The clorophyll a concentration had to be changed to numeric before making the model. This column contained NA`s, but removing them did not change the result. 
+```{r}
+#| label: Clorophyll model
+#| warning: false
+density_data$chlorophlly_a_concentration_mg_m3 <- as.numeric(density_data$chlorophlly_a_concentration_mg_m3)
+
+mod5 <- lmer(log_larvae_dens ~ chlorophlly_a_concentration_mg_m3 + (1|month_year), data = density_data)
+p_value_mod5 <- summary(mod5)$coefficients["chlorophlly_a_concentration_mg_m3", "Pr(>|t|)"]
+p_value_mod5
+```
+
+I wanted a very simple plot to visualize the data, to compare with the published plot
+```{r}
+#| label: copepode plot
+ggplot(density_data, aes(x = log_copepode_dens, y = log_larvae_dens, colour = factor(month_year))) +
+  geom_point()
+```
+
