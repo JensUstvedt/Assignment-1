@@ -2,6 +2,7 @@
 title: "Reproducibility assignment"
 author: "Jens Ustvedt"
 format: html
+embed-resources: true
 editor: visual
 ---
 Part 1: Reproducing analysis and results from paper
