@@ -2,10 +2,9 @@
 title: "Reproducibility assignment"
 author: "Jens Ustvedt"
 format: html
-embed-resources: true
 editor: visual
 ---
-Part 1: Reproducing analysis and results from paper
+Part 1: Reproducing analysis and results from paper. 
 
 I wanted to reproduce the results presented in a table in the paper, which showed all models they made and p-values for each model (ignoring whether this result is statistically interesting), and an additional plot of the data to see if the data supplied was equal (in size and values) to what the authors used to make their results. 
 ```{r}
